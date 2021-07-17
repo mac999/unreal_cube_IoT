@@ -1,5 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Developer: Taewook, Kang
+// Date: 2021.6.29
+// Email: laputa99999@gmail.com
 
 #include "SerialPort.h"
 #include "Windows/AllowWindowsPlatformTypes.h"
@@ -8,7 +9,7 @@
 
 SerialPort::SerialPort()
 {
-	m_hIDComDev = NULL;
+	_PortHandle = NULL;
 }
 
 SerialPort::~SerialPort()
@@ -22,8 +23,8 @@ bool SerialPort::open(const TCHAR* sPort, int nBaud)
 	FString szPort = sPort;
 	// DCB dcb;
 
-	m_hIDComDev = CreateFile(*szPort, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-	if (m_hIDComDev == NULL)
+	_PortHandle = CreateFile(*szPort, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+	if (_PortHandle == NULL)
 	{
 		unsigned long dwError = GetLastError();
 		UE_LOG(LogTemp, Error, TEXT("Failed to open port %s. Error: %08X"), *szPort, dwError);
@@ -38,39 +39,39 @@ bool SerialPort::open(const TCHAR* sPort, int nBaud)
 	CommTimeOuts.ReadTotalTimeoutConstant = 0;
 	CommTimeOuts.WriteTotalTimeoutMultiplier = 0;
 	CommTimeOuts.WriteTotalTimeoutConstant = 10;
-	SetCommTimeouts(m_hIDComDev, &CommTimeOuts);
+	SetCommTimeouts(_PortHandle, &CommTimeOuts);
 
 	DCB dcb;
 	dcb.DCBlength = sizeof(DCB);
-	GetCommState(m_hIDComDev, &dcb);
+	GetCommState(_PortHandle, &dcb);
 	dcb.BaudRate = nBaud;
 	dcb.ByteSize = 8;
 
-	if (!SetCommState(m_hIDComDev, &dcb) || !SetupComm(m_hIDComDev, 10000, 10000))
+	if (!SetCommState(_PortHandle, &dcb) || !SetupComm(_PortHandle, 10000, 10000))
 	{
 		unsigned long dwError = GetLastError();
-		CloseHandle(m_hIDComDev);
-		m_hIDComDev = NULL;
+		CloseHandle(_PortHandle);
+		_PortHandle = NULL;
 		return false;
 	}
 
-	PurgeComm(m_hIDComDev, PURGE_RXCLEAR | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_TXABORT);
+	PurgeComm(_PortHandle, PURGE_RXCLEAR | PURGE_TXCLEAR | PURGE_RXABORT | PURGE_TXABORT);
 
 	return true;
 }
 
 void SerialPort::close()
 {
-	if (!m_hIDComDev)
+	if (!_PortHandle)
 		return;
-	CloseHandle(m_hIDComDev);
-	m_hIDComDev = NULL;
+	CloseHandle(_PortHandle);
+	_PortHandle = NULL;
 }
 
 int SerialPort::write(TArray<uint8>& Buffer)
 {
 	DWORD dwBytesWritten;
-	BOOL bWrite = WriteFile(m_hIDComDev, Buffer.GetData(), Buffer.Num(), &dwBytesWritten, NULL);
+	BOOL bWrite = WriteFile(_PortHandle, Buffer.GetData(), Buffer.Num(), &dwBytesWritten, NULL);
 	if (!bWrite && (GetLastError() == ERROR_IO_PENDING))
 		return dwBytesWritten;
 
@@ -80,7 +81,7 @@ int SerialPort::write(TArray<uint8>& Buffer)
 int SerialPort::read(TArray<uint8>& Buffer)
 {
 	DWORD dwBytesRead = 0;
-	BOOL bWrite = ReadFile(m_hIDComDev, Buffer.GetData(), Buffer.Num(), &dwBytesRead, NULL);
+	BOOL bWrite = ReadFile(_PortHandle, Buffer.GetData(), Buffer.Num(), &dwBytesRead, NULL);
 	if (!bWrite)
 	{
 		if (GetLastError() == ERROR_IO_PENDING)

@@ -1,4 +1,7 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// Title: Serial (RS232) communication class
+// Developer: Taewook, Kang
+// Date: 2021.6.29
+// Email: laputa99999@gmail.com
 
 #pragma once
 
@@ -21,5 +24,5 @@ public:
 	int read(TArray<uint8>& Buffer);
 
 private:
-	void* m_hIDComDev;
+	void* _PortHandle;
 };

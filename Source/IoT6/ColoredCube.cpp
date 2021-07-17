@@ -1,5 +1,6 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
+// Developer: Taewook, Kang
+// Date: 2021.6.29
+// Email: laputa99999@gmail.com
 
 #include "ColoredCube.h"
 #include "Materials/MaterialInstanceDynamic.h"
